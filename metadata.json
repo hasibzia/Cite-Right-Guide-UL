@@ -1,0 +1,6 @@
+{
+  "name": "CiteRight Harvard Reference Formatter",
+  "description": "Adaptive college Harvard-style reference and citation converter trained on university exemplar context.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
