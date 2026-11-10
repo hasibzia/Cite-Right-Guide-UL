@@ -2,44 +2,106 @@
 
 @layer base {
   :root {
-    --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-google-sans: 'Google Sans', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     --font-serif-academic: "Times New Roman", Times, "Liberation Serif", serif;
   }
 
   body {
-    font-family: var(--font-apple);
-    color: #1d1d1f;
-    background-color: #f5f5f7;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(219, 234, 254, 0.45) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(243, 232, 255, 0.4) 0px, transparent 50%),
-      radial-gradient(at 50% 100%, rgba(254, 240, 138, 0.35) 0px, transparent 60%);
-    background-attachment: fixed;
+    font-family: var(--font-google-sans);
+    color: #000000;
+    background-color: #ffffff;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Apple-style typography and sleek card styling */
-.apple-card {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(229, 231, 235, 0.8);
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.02),
-    0 10px 24px -4px rgba(0, 0, 0, 0.04),
-    0 0 0 1px rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* White, Yellow, and Black aesthetic ONLY (No blue, No purple) */
+.city-card {
+  background: #ffffff;
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0px #000000;
 }
 
-/* Authentic Times New Roman Academic Citation font */
+.city-input {
+  background: #ffffff;
+  border: 2px solid #000000;
+  color: #000000;
+  transition: all 0.15s ease;
+}
+
+.city-input:focus {
+  outline: none;
+  border-color: #000000;
+  box-shadow: 0 0 0 3px #facc15;
+}
+
+.city-btn-black {
+  background: #000000;
+  color: #ffffff;
+  font-weight: 700;
+  border: 2px solid #000000;
+  box-shadow: 3px 3px 0px #facc15;
+  transition: all 0.15s ease;
+}
+
+.city-btn-black:hover {
+  background: #171717;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #facc15;
+}
+
+.city-btn-black:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #facc15;
+}
+
+.city-btn-yellow {
+  background: #facc15;
+  color: #000000;
+  font-weight: 700;
+  border: 2px solid #000000;
+  box-shadow: 3px 3px 0px #000000;
+  transition: all 0.15s ease;
+}
+
+.city-btn-yellow:hover {
+  background: #fde047;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #000000;
+}
+
+.city-btn-yellow:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+.city-btn-white {
+  background: #ffffff;
+  color: #000000;
+  font-weight: 600;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+  transition: all 0.15s ease;
+}
+
+.city-btn-white:hover {
+  background: #fef08a;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.city-btn-white:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+/* Times New Roman Academic Citation */
 .citation-serif {
   font-family: var(--font-serif-academic);
-  font-size: 1.0625rem;
+  font-size: 1.05rem;
   line-height: 1.65;
-  color: #111827;
-  letter-spacing: 0.005em;
+  color: #000000;
 }
 
 .citation-serif em {
@@ -47,60 +109,9 @@
   font-family: var(--font-serif-academic);
 }
 
-/* Apple system buttons */
-.btn-apple-primary {
-  background: #0071e3;
-  color: #ffffff;
-  font-weight: 600;
-  border-radius: 980px;
-  border: 1px solid rgba(0, 113, 227, 0.9);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 113, 227, 0.2);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.btn-apple-primary:hover {
-  background: #0077ed;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08), 0 6px 18px rgba(0, 113, 227, 0.3);
-  transform: translateY(-0.5px);
-}
-
-.btn-apple-primary:active {
-  background: #006edb;
-  transform: translateY(0.5px);
-}
-
-.btn-apple-secondary {
-  background: rgba(255, 255, 255, 0.9);
-  color: #1d1d1f;
-  font-weight: 500;
-  border: 1px solid rgba(210, 210, 215, 0.7);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
-}
-
-.btn-apple-secondary:hover {
-  background: #ffffff;
-  border-color: #86868b;
-  color: #000000;
-}
-
-/* Apple-style sleek input */
-.apple-input {
-  background: #ffffff;
-  border: 1px solid #d2d2d7;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.apple-input:focus {
-  border-color: #0071e3;
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
-  outline: none;
-}
-
 /* Yellow Bottom Section */
-.yellow-bottom-section {
-  background: linear-gradient(180deg, #fef9c3 0%, #fef08a 100%);
-  border: 1px solid #facc15;
-  box-shadow: 0 8px 30px -4px rgba(234, 179, 8, 0.15);
+.yellow-footer-banner {
+  background-color: #facc15;
+  border-top: 3px solid #000000;
+  color: #000000;
 }

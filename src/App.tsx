@@ -1,39 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ArrowRight,
   Clipboard,
   RotateCcw,
   BookOpen,
+  ArrowRight,
   Check,
-  AlertCircle,
-  BookmarkCheck,
 } from 'lucide-react';
 import { Header } from './components/Header';
-import { ContextRulesModal } from './components/ContextRulesModal';
 import { CitationResultCard } from './components/CitationResultCard';
 import { BibliographyList } from './components/BibliographyList';
 import { Footer } from './components/Footer';
-import {
-  UniversityBlueprint,
-  FormattedReferenceResult,
-  FormatResponsePayload,
-} from './types';
-import { DEFAULT_BLUEPRINT, QUICK_INPUT_SAMPLES } from './defaultRules';
+import { FormattedReferenceResult } from './types';
+import { formatULHarvardReference } from './utils/ulHarvardFormatter';
 
-const LOCAL_STORAGE_BLUEPRINT_KEY = 'citeright_ul_blueprint_v2';
-const LOCAL_STORAGE_BIBLIOGRAPHY_KEY = 'citeright_ul_bibliography_v2';
+const LOCAL_STORAGE_BIBLIOGRAPHY_KEY = 'city_ul_bibliography_v3';
 
 export default function App() {
-  const [blueprint, setBlueprint] = useState<UniversityBlueprint>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_BLUEPRINT_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.warn('Failed to load blueprint from localStorage', e);
-    }
-    return DEFAULT_BLUEPRINT;
-  });
-
   const [savedBibliography, setSavedBibliography] = useState<FormattedReferenceResult[]>(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_BIBLIOGRAPHY_KEY);
@@ -44,21 +26,9 @@ export default function App() {
     return [];
   });
 
-  const [isContextModalOpen, setIsContextModalOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<FormattedReferenceResult[]>([]);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  // Save blueprint changes
-  const handleSaveBlueprint = (updated: UniversityBlueprint) => {
-    setBlueprint(updated);
-    try {
-      localStorage.setItem(LOCAL_STORAGE_BLUEPRINT_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   // Save bibliography to localStorage
   useEffect(() => {
@@ -69,41 +39,51 @@ export default function App() {
     }
   }, [savedBibliography]);
 
-  // Handle reference submission
+  // Handle reference submission with resilient client-fallback for Vercel
   const handleSubmitReference = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputText.trim()) return;
 
     setIsLoading(true);
-    setErrorMsg(null);
 
     try {
-      const response = await fetch('/api/format-reference', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rawInput: inputText.trim(),
-          customRules: blueprint.rules,
-          universityGuidelines: blueprint.generalInstructions,
-        }),
-      });
+      let formattedResults: FormattedReferenceResult[] = [];
 
-      if (!response.ok) {
-        throw new Error(`Server returned status: ${response.status}`);
+      try {
+        const response = await fetch('/api/format-reference', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            rawInput: inputText.trim(),
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.results && data.results.length > 0) {
+            formattedResults = data.results;
+          }
+        }
+      } catch (networkError) {
+        // Log network issue gracefully
+        console.warn('API route unavailable on current host, using local UL Harvard engine', networkError);
       }
 
-      const data: FormatResponsePayload = await response.json();
-
-      if (data.results && data.results.length > 0) {
-        setResults(data.results);
-      } else {
-        setErrorMsg('Could not parse reference. Please verify your input text.');
+      // If backend was unreachable or Vercel deployed without serverless handler,
+      // seamlessly format using the built-in University of Limerick engine
+      if (formattedResults.length === 0) {
+        const localFormatted = formatULHarvardReference(inputText.trim());
+        formattedResults = [localFormatted];
       }
+
+      setResults(formattedResults);
     } catch (err: any) {
       console.error('Formatting error:', err);
-      setErrorMsg('An error occurred while formatting your reference. Please try again.');
+      // Even in the rarest error, guarantee an output
+      const fallbackResult = formatULHarvardReference(inputText.trim());
+      setResults([fallbackResult]);
     } finally {
       setIsLoading(false);
     }
@@ -138,39 +118,35 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
-      {/* Top subtle Apple-style accent border with blue, purple, and yellow */}
-      <div className="h-1 w-full bg-gradient-to-r from-[#0071e3] via-[#8b5cf6] to-[#facc15]" />
+    <div className="min-h-screen flex flex-col bg-white text-black font-[var(--font-google-sans)] selection:bg-[#facc15] selection:text-black">
+      {/* Top Black Accent Bar */}
+      <div className="h-2 w-full bg-black" />
 
-      {/* Main Header */}
-      <Header
-        onOpenContextSettings={() => setIsContextModalOpen(true)}
-        activeRuleCount={blueprint.rules.length}
-        collegeName={blueprint.institutionName}
-      />
+      {/* Header */}
+      <Header />
 
       {/* Main Single-Input Focused Application Body */}
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 pb-8 space-y-7">
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 pb-8 space-y-6">
         {/* The One Focused Input Card */}
-        <div className="apple-card rounded-2xl p-6 sm:p-8 relative">
+        <div className="city-card rounded-2xl p-6 sm:p-8 relative">
           <form onSubmit={handleSubmitReference} className="space-y-4">
             <div className="flex items-center justify-between">
               <label
                 htmlFor="referenceInput"
-                className="text-sm font-semibold text-[#1d1d1f] flex items-center gap-2"
+                className="text-base font-black text-black flex items-center gap-2"
               >
-                <BookOpen className="w-4 h-4 text-[#0071e3]" />
-                <span>Input Reference</span>
+                <BookOpen className="w-5 h-5 text-black" />
+                <span>Reference Input</span>
               </label>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handlePasteClipboard}
-                  className="btn-apple-secondary flex items-center gap-1.5 px-3 py-1 rounded-full text-xs cursor-pointer"
+                  className="city-btn-white flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold cursor-pointer"
                   title="Paste from clipboard"
                 >
-                  <Clipboard className="w-3.5 h-3.5 text-slate-500" />
+                  <Clipboard className="w-3.5 h-3.5" />
                   <span>Paste</span>
                 </button>
                 {inputText && (
@@ -180,7 +156,7 @@ export default function App() {
                       setInputText('');
                       setResults([]);
                     }}
-                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    className="p-1 rounded-lg border border-black hover:bg-black hover:text-white transition-colors cursor-pointer"
                     title="Clear input"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
@@ -189,60 +165,33 @@ export default function App() {
               </div>
             </div>
 
-            {/* Single clean input box for the student/user */}
+            {/* Single input place for the user */}
             <div className="relative">
               <textarea
                 id="referenceInput"
-                rows={4}
+                rows={5}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Paste any reference or details here (e.g. N. Shahrubudin, T. C. Lee and R. Ramlan, 2019, An overview on 3D printing technology, Procedia Manufacturing 35(35), 1286-1296)..."
-                className="apple-input w-full p-4 rounded-xl text-sm sm:text-base text-slate-800 placeholder:text-slate-400 font-normal resize-y min-h-[110px]"
+                placeholder="Paste your reference here to make UL referencing..."
+                className="city-input w-full p-4 rounded-xl text-base font-medium resize-y min-h-[130px] placeholder:text-neutral-400"
               />
             </div>
 
-            {/* Quick Exemplar Inputs (including 3D Printing UL references) */}
-            <div className="pt-1">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-2">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span>Try an example reference:</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {QUICK_INPUT_SAMPLES.map((sample, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setInputText(sample.text);
-                    }}
-                    className="btn-apple-secondary px-3 py-1.5 rounded-full text-xs text-slate-700 hover:text-[#0071e3] hover:border-blue-400 cursor-pointer"
-                  >
-                    {sample.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Main Action Button */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-xs text-slate-500 font-normal flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0071e3]" />
-                <span>Format: <strong>University of Limerick Harvard (Cite It Right)</strong></span>
-              </div>
-
+            <div className="pt-2 flex justify-end">
               <button
                 type="submit"
                 disabled={isLoading || !inputText.trim()}
-                className="btn-apple-primary w-full sm:w-auto px-7 py-3 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="city-btn-yellow w-full sm:w-auto px-8 py-3.5 rounded-xl text-black font-black text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isLoading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Formatting to UL Standard...</span>
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    <span>Formatting...</span>
                   </>
                 ) : (
                   <>
-                    <span>Generate Harvard Citation</span>
+                    <span>Make UL Reference</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -251,25 +200,14 @@ export default function App() {
           </form>
         </div>
 
-        {/* Error Notification */}
-        {errorMsg && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs sm:text-sm text-red-800 flex items-center gap-3">
-            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-            <p className="font-medium">{errorMsg}</p>
-          </div>
-        )}
-
         {/* Formatted Citation Results */}
         {results.length > 0 && (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2">
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span>Formatted Citation</span>
+              <h2 className="text-base font-black text-black flex items-center gap-2">
+                <Check className="w-4 h-4 text-black" />
+                <span>UL Formatted Reference</span>
               </h2>
-              <span className="text-xs font-medium text-slate-500">
-                Source in Times New Roman italics
-              </span>
             </div>
 
             <div className="space-y-4">
@@ -295,15 +233,7 @@ export default function App() {
         />
       </main>
 
-      {/* University Context Rules & Learning Modal */}
-      <ContextRulesModal
-        isOpen={isContextModalOpen}
-        onClose={() => setIsContextModalOpen(false)}
-        blueprint={blueprint}
-        onSaveBlueprint={handleSaveBlueprint}
-      />
-
-      {/* Yellow bottom section with disclaimers */}
+      {/* Yellow bottom section with guides and disclaimer */}
       <Footer />
     </div>
   );
