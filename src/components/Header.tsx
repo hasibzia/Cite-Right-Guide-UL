@@ -12,7 +12,7 @@ export const Header: React.FC = () => {
       </h1>
 
       <p className="mt-2 text-base sm:text-lg text-black font-semibold">
-        make ul referecing
+        create your reference
       </p>
     </header>
   );
