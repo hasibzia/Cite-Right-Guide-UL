@@ -1,122 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Clipboard,
-  RotateCcw,
-  BookOpen,
-  ArrowRight,
-  Check,
-} from 'lucide-react';
+import React from 'react';
+import { Lock, Instagram, Linkedin, Clock, Sparkles } from 'lucide-react';
 import { Header } from './components/Header';
-import { CitationResultCard } from './components/CitationResultCard';
-import { BibliographyList } from './components/BibliographyList';
 import { Footer } from './components/Footer';
-import { FormattedReferenceResult } from './types';
-import { formatULHarvardReference } from './utils/ulHarvardFormatter';
-
-const LOCAL_STORAGE_BIBLIOGRAPHY_KEY = 'city_ul_bibliography_v3';
 
 export default function App() {
-  const [savedBibliography, setSavedBibliography] = useState<FormattedReferenceResult[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_BIBLIOGRAPHY_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.warn('Failed to load bibliography from localStorage', e);
-    }
-    return [];
-  });
-
-  const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<FormattedReferenceResult[]>([]);
-
-  // Save bibliography to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_BIBLIOGRAPHY_KEY, JSON.stringify(savedBibliography));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [savedBibliography]);
-
-  // Handle reference submission with resilient client-fallback for Vercel
-  const handleSubmitReference = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!inputText.trim()) return;
-
-    setIsLoading(true);
-
-    try {
-      let formattedResults: FormattedReferenceResult[] = [];
-
-      try {
-        const response = await fetch('/api/format-reference', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            rawInput: inputText.trim(),
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.results && data.results.length > 0) {
-            formattedResults = data.results;
-          }
-        }
-      } catch (networkError) {
-        // Log network issue gracefully
-        console.warn('API route unavailable on current host, using local UL Harvard engine', networkError);
-      }
-
-      // If backend was unreachable or Vercel deployed without serverless handler,
-      // seamlessly format using the built-in University of Limerick engine
-      if (formattedResults.length === 0) {
-        const localFormatted = formatULHarvardReference(inputText.trim());
-        formattedResults = [localFormatted];
-      }
-
-      setResults(formattedResults);
-    } catch (err: any) {
-      console.error('Formatting error:', err);
-      // Even in the rarest error, guarantee an output
-      const fallbackResult = formatULHarvardReference(inputText.trim());
-      setResults([fallbackResult]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePasteClipboard = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        setInputText(text);
-      }
-    } catch (e) {
-      console.error('Clipboard access not granted', e);
-    }
-  };
-
-  const handleAddToBibliography = (item: FormattedReferenceResult) => {
-    if (savedBibliography.some((b) => b.id === item.id || b.harvardCitationPlain === item.harvardCitationPlain)) {
-      return;
-    }
-    setSavedBibliography((prev) => [item, ...prev]);
-  };
-
-  const handleRemoveFromBibliography = (id: string) => {
-    setSavedBibliography((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleClearBibliography = () => {
-    if (window.confirm('Clear all references from your saved bibliography list?')) {
-      setSavedBibliography([]);
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-white text-black font-[var(--font-google-sans)] selection:bg-[#facc15] selection:text-black">
       {/* Top Black Accent Bar */}
@@ -125,115 +12,58 @@ export default function App() {
       {/* Header */}
       <Header />
 
-      {/* Main Single-Input Focused Application Body */}
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 pb-8 space-y-6">
-        {/* The One Focused Input Card */}
-        <div className="city-card rounded-2xl p-6 sm:p-8 relative">
-          <form onSubmit={handleSubmitReference} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="referenceInput"
-                className="text-base font-black text-black flex items-center gap-2"
+      {/* Main Container */}
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 pb-12 space-y-6">
+        {/* Access Banned / Maintenance Card */}
+        <div className="city-card rounded-2xl p-7 sm:p-10 relative text-center">
+          {/* Status Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#facc15] border-2 border-black text-black font-black text-xs uppercase tracking-wider mb-5 shadow-[2px_2px_0px_#000000]">
+            <Lock className="w-3.5 h-3.5" />
+            <span>Access Paused</span>
+          </div>
+
+          {/* Main Message */}
+          <h2 className="text-3xl sm:text-4xl font-black text-black tracking-tight mb-6">
+            City will be back soon.
+          </h2>
+
+          {/* Connect With Creator Section */}
+          <div className="p-6 rounded-2xl bg-[#fef08a] border-2 border-black max-w-lg mx-auto mb-6 shadow-[3px_3px_0px_#000000]">
+            <div className="text-xs font-black uppercase tracking-wider text-black mb-3">
+              Connect with my creator:
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="https://www.instagram.com/mirhasibullahzia/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="city-btn-black inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-extrabold text-sm cursor-pointer"
               >
-                <BookOpen className="w-5 h-5 text-black" />
-                <span>Reference Input</span>
-              </label>
+                <Instagram className="w-4 h-4 text-[#facc15]" />
+                <span>@mirhasibullahzia</span>
+              </a>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handlePasteClipboard}
-                  className="city-btn-white flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold cursor-pointer"
-                  title="Paste from clipboard"
-                >
-                  <Clipboard className="w-3.5 h-3.5" />
-                  <span>Paste</span>
-                </button>
-                {inputText && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInputText('');
-                      setResults([]);
-                    }}
-                    className="p-1 rounded-lg border border-black hover:bg-black hover:text-white transition-colors cursor-pointer"
-                    title="Clear input"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Single input place for the user */}
-            <div className="relative">
-              <textarea
-                id="referenceInput"
-                rows={5}
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Paste your reference here to make UL referencing..."
-                className="city-input w-full p-4 rounded-xl text-base font-medium resize-y min-h-[130px] placeholder:text-neutral-400"
-              />
-            </div>
-
-            {/* Main Action Button */}
-            <div className="pt-2 flex justify-end">
-              <button
-                type="submit"
-                disabled={isLoading || !inputText.trim()}
-                className="city-btn-yellow w-full sm:w-auto px-8 py-3.5 rounded-xl text-black font-black text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              <a
+                href="https://www.linkedin.com/in/mirhasibullahzia/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="city-btn-white inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-black font-extrabold text-sm cursor-pointer"
               >
-                {isLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                    <span>Formatting...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Make UL Reference</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Formatted Citation Results */}
-        {results.length > 0 && (
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-base font-black text-black flex items-center gap-2">
-                <Check className="w-4 h-4 text-black" />
-                <span>UL Formatted Reference</span>
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              {results.map((result) => (
-                <CitationResultCard
-                  key={result.id}
-                  result={result}
-                  onSaveToBibliography={handleAddToBibliography}
-                  isSaved={savedBibliography.some(
-                    (b) => b.id === result.id || b.harvardCitationPlain === result.harvardCitationPlain
-                  )}
-                />
-              ))}
+                <Linkedin className="w-4 h-4 text-black" />
+                <span>LinkedIn</span>
+              </a>
             </div>
           </div>
-        )}
 
-        {/* Saved Reference List Section */}
-        <BibliographyList
-          items={savedBibliography}
-          onRemoveItem={handleRemoveFromBibliography}
-          onClearAll={handleClearBibliography}
-        />
+          <div className="flex items-center justify-center gap-2 text-xs font-bold text-neutral-600">
+            <Clock className="w-3.5 h-3.5" />
+            <span>Under active development — stay tuned for the next release</span>
+          </div>
+        </div>
       </main>
 
-      {/* Yellow bottom section with guides and disclaimer */}
+      {/* Footer */}
       <Footer />
     </div>
   );
